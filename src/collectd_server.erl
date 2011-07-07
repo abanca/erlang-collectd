@@ -120,10 +120,19 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 
+%%%
+%%% Patch to send very big ammount of values that makes too big
+%%% UDP packets
+%%%
 send_packet(Sock, Host, Port, Interval, Values) ->
+    lists:map(fun(X) ->
+                  send_packet_ok(Sock, Host, Port, Interval, [X])
+              end, Values).
+
+send_packet_ok(Sock, Host, Port, Interval, Values) ->
     {MS, S, _} = erlang:now(),
     Time = MS * 1000000 + S,
-    [Name, Hostname | _] = string:tokens(atom_to_list(node()), "@"),
+    [Name, _Hostname | _] = string:tokens(atom_to_list(node()), "@"),
     Parts = [collectd_pkt:pack_plugin("erlang"),
 	     collectd_pkt:pack_plugin_instance(Name)
 	     | lists:map(fun({type, Type}) ->
@@ -135,9 +144,11 @@ send_packet(Sock, Host, Port, Interval, Values) ->
 					    || Value <- Values1],
 				 collectd_pkt:pack_values(Values2)
 			 end, collectd_values:to_list(Values))],
-    Pkt = collectd_pkt:pack(Hostname, Time, Interval, Parts),
+% As we got an active_pasive cluster and we want per platfform statitics whe use
+% the name, not the Hostname to the statistics collections.
+%    Pkt = collectd_pkt:pack(Hostname, Time, Interval, Parts),
+    Pkt = collectd_pkt:pack(Name, Time, Interval, Parts),
     ok = gen_udp:send(Sock, Host, Port, Pkt).
-
 
 timer(Pid, Timeout) ->
     gen_server:cast(Pid, timer),
