@@ -1,0 +1,17 @@
+
+Erlang-Collectd
+===============
+
+Branch by NCG Moviles
+Forked from: amanciodiaz/erlang-collectd
+Forked from: astro/erlang-collectd
+
+This app sends data to a collectd server.
+
+Changes from original sources:
+
+* Added basic rebar support
+* Patch for sending only one value per UDP packet
+* Patch for using node name instead Hostname. This way we got application statistics and not machine statistics.
+
+
